@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockMaster - Halloween Ocean</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>📦 StockMaster</h1>
+        <div class="grupo-info">
+            <h2>Grupo: Halloween Ocean</h2>
+            <p>Integrantes: Luciano Aliaga y Matias Cerna</p>
+        </div>
+    </header>
+
+    <h3>Agregar Nuevo Producto</h3>
+    <div class="form-container">
+        <input type="text" id="nombre" placeholder="Nombre del producto" required>
+        <input type="text" id="descripcion" placeholder="Descripción">
+        <input type="number" id="precio" step="0.01" placeholder="Precio ($)" required>
+        <input type="number" id="stock" placeholder="Cantidad Inicial" required>
+        <button onclick="agregarProducto()">Guardar Producto</button>
+    </div>
+
+    <h3>Inventario Actual</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-productos">
+                </tbody>
+        </table>
+    </div>
+
+    <script>
+        // Lógica de conexión con el Backend
+        const API_URL = 'http://localhost:5000/api/productos';
+
+        async function cargarProductos() {
+            try {
+                const response = await fetch(API_URL);
+                const productos = await response.json();
+                const tbody = document.getElementById('tabla-productos');
+                tbody.innerHTML = '';
+                
+                productos.forEach(p => {
+                    const precioFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(p.precio);
+                    const row = `<tr>
+                        <td>#${p.id}</td>
+                        <td><strong>${p.nombre}</strong></td>
+                        <td>${p.descripcion}</td>
+                        <td>${precioFormateado}</td>
+                        <td><span style="background: ${p.stock < 10 ? '#ffcccc' : '#d4edda'}; padding: 3px 8px; border-radius: 10px; font-size: 0.9em">${p.stock} un.</span></td>
+                    </tr>`;
+                    tbody.innerHTML += row;
+                });
+            } catch (error) {
+                console.error('Error cargando productos:', error);
+                document.getElementById('tabla-productos').innerHTML = '<tr><td colspan="5" style="text-align:center; color: red;">Error al conectar con el Backend</td></tr>';
+            }
+        }
+
+        async function agregarProducto() {
+            const nombreBtn = document.querySelector('button');
+            nombreBtn.innerText = 'Guardando...';
+            nombreBtn.disabled = true;
+
+            const data = {
+                nombre: document.getElementById('nombre').value,
+                descripcion: document.getElementById('descripcion').value,
+                precio: parseFloat(document.getElementById('precio').value),
+                stock: parseInt(document.getElementById('stock').value)
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (response.ok) {
+                    document.getElementById('nombre').value = ''; 
+                    document.getElementById('descripcion').value = '';
+                    document.getElementById('precio').value = '';
+                    document.getElementById('stock').value = '';
+                    cargarProductos(); 
+                } else {
+                    alert('Error al guardar el producto.');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Error de conexión.');
+            } finally {
+                nombreBtn.innerText = 'Guardar Producto';
+                nombreBtn.disabled = false;
+            }
+        }
+
+        cargarProductos();
+    </script>
+</body>
+</html>
