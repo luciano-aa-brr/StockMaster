@@ -14,3 +14,7 @@ Sistema de gestión de inventario contenerizado utilizando Docker y desplegado e
 * **Base de Datos:** PostgreSQL
 * **Proxy:** Nginx
 * **Infraestructura:** Docker & Azure Container Instances (ACI)
+
+## Despliegue
+El proyecto se encuentra desplegado y funcionando en Azure Container Instances:
+🔗 **Link del Proyecto:** http://stockmaster-halloween.eastus.azurecontainer.io

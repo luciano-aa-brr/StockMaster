@@ -1,0 +1,97 @@
+apiVersion: 2019-12-01
+location: eastus
+name: stockmaster-group
+properties:
+  containers:
+  # --- FRONTEND ---
+  - name: frontend
+    properties:
+      image: acrhalloweenocean2025.azurecr.io/stockmaster-frontend:v1
+      resources:
+        requests:
+          cpu: 0.5
+          memoryInGB: 1.0
+      ports:
+      - port: 3000
+  
+  # --- BACKEND ---
+  - name: backend
+    properties:
+      image: acrhalloweenocean2025.azurecr.io/stockmaster-backend:v1
+      environmentVariables:
+        - name: DB_HOST
+          value: localhost
+        - name: DB_NAME
+          value: stockmaster_db
+        - name: DB_USER
+          value: usuario
+        - name: DB_PASSWORD
+          value: password
+      resources:
+        requests:
+          cpu: 0.5
+          memoryInGB: 1.0
+      ports:
+      - port: 5000
+
+  # --- DATABASE (BD) ---
+  - name: db
+    properties:
+      image: acrhalloweenocean2025.azurecr.io/postgres:13
+      environmentVariables:
+        - name: POSTGRES_USER
+          value: usuario
+        - name: POSTGRES_PASSWORD
+          value: password
+        - name: POSTGRES_DB
+          value: stockmaster_db
+      resources:
+        requests:
+          cpu: 0.5
+          memoryInGB: 1.0
+      ports:
+      - port: 5432
+
+  # --- NGINX ---
+  - name: nginx
+    properties:
+      image: acrhalloweenocean2025.azurecr.io/stockmaster-nginx:v1
+      resources:
+        requests:
+          cpu: 0.5
+          memoryInGB: 0.5
+      ports:
+      - port: 80
+
+  # --- BACKUP ---
+  - name: backup
+    properties:
+      image: acrhalloweenocean2025.azurecr.io/stockmaster-backup:v1
+      environmentVariables:
+        - name: DB_HOST
+          value: localhost
+        - name: DB_NAME
+          value: stockmaster_db
+        - name: DB_USER
+          value: usuario
+        - name: DB_PASSWORD
+          value: password
+      resources:
+        requests:
+          cpu: 0.5
+          memoryInGB: 0.5
+
+  # --- NETWORK AND CREDENTIALS ---
+  imageRegistryCredentials:
+  - server: acrhalloweenocean2025.azurecr.io
+    username: acrhalloweenocean2025
+    password: "CONTRASEÑA_BORRADA_POR_SEGURIDAD"
+  ipAddress:
+    ports:
+    - port: 80
+      protocol: TCP
+    type: Public
+    dnsNameLabel: stockmaster-halloween
+  osType: Linux
+  restartPolicy: Always
+type: Microsoft.ContainerInstance/containerGroups
