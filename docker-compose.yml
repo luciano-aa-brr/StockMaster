@@ -50,6 +50,22 @@ services:
       - frontend
     networks:
       - stockmaster-net
+  # 5. Servicio de Backups
+  backup:
+    build: ./backup
+    container_name: stockmaster_backup
+    environment:
+      DB_HOST: db
+      DB_NAME: stockmaster_db
+      DB_USER: usuario
+      DB_PASSWORD: password
+    depends_on:
+      - db
+   
+    volumes:
+      - ./respaldos:/backups
+    networks:
+      - stockmaster-net
 
 volumes:
   postgres_data:
