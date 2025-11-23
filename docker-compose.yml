@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # 1. Base de Datos
   db:
     image: postgres:13
     container_name: stockmaster_db
@@ -11,16 +12,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
-    ports:
-      - "5432:5432"
     networks:
       - stockmaster-net
 
+  # 2. Backend 
   backend:
     build: ./backend
-    container_name: stockmaster_backend
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     environment:
       DB_HOST: db
       DB_NAME: stockmaster_db
@@ -31,11 +30,24 @@ services:
     networks:
       - stockmaster-net
 
+  # 3. Frontend
   frontend:
     build: ./frontend
     container_name: stockmaster_frontend
+    expose:
+      - "3000"
+    networks:
+      - stockmaster-net
+
+  # 4. Nginx
+  nginx:
+    build: ./nginx
+    container_name: stockmaster_nginx
     ports:
-      - "3000:3000"
+      - "80:80"
+    depends_on:
+      - backend
+      - frontend
     networks:
       - stockmaster-net
 
