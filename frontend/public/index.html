@@ -32,19 +32,19 @@
     <div id="app-view" class="hidden">
         
         <header class="app-header">
-            <div class="header-brand">
+            
+            <div class="header-left">
                 <h1>📦 StockMaster</h1>
+                <div class="brand-separator"></div> <span id="nombre-negocio-display" class="negocio-badge" title="Nombre del Negocio">Cargando...</span>
             </div>
             
-            <div class="header-user-info">
-                <span id="nombre-negocio-display" class="negocio-badge">Cargando...</span>
-                
+            <div class="header-right">
                 <div class="user-welcome">
                     Hola, <strong id="usuario-nombre">Usuario</strong>
                 </div>
-
                 <button class="btn-logout" onclick="logout()">Salir</button>
             </div>
+            
         </header>
 
         <h3 id="titulo-formulario">Gestión de Productos</h3>

@@ -20,67 +20,99 @@ body {
     color: var(--color-texto-principal);
 }
 
-/* --- NUEVO HEADER (TIPO NAVBAR) --- */
+/* --- HEADER REORGANIZADO (Optimizado para nombres largos) --- */
 .app-header {
     background-color: white;
     padding: 15px 30px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between; /* Separa los grupos a los extremos */
     align-items: center;
     border-bottom: 4px solid var(--color-lavanda);
-    margin-bottom: 30px;
-    border-radius: 8px;
+    margin-bottom: 40px;
+    border-radius: 12px;
 }
 
-.header-brand h1 {
+/* --- GRUPO IZQUIERDO: Logo + Separador + Negocio --- */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px; /* Espacio cómodo entre elementos */
+    flex: 1; /* Ocupa el espacio disponible si es necesario */
+}
+
+.header-left h1 {
     margin: 0;
     font-size: 1.8em;
     color: var(--color-texto-titulo);
+    white-space: nowrap; /* El logo nunca se rompe en dos líneas */
 }
 
-.header-user-info {
-    text-align: right;
-    display: flex;
-    align-items: center;
-    gap: 15px;
+/* Línea gris vertical para separar Logo de Negocio */
+.brand-separator {
+    height: 30px;
+    width: 2px;
+    background-color: #eee;
 }
 
 .negocio-badge {
     background-color: var(--color-lavanda);
     color: #333;
-    padding: 5px 12px;
-    border-radius: 15px;
-    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 800;
     font-size: 0.9em;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    
+    /* TRUCO PARA NOMBRES MUY LARGOS */
+    max-width: 400px; /* Ancho máximo antes de cortar */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Pone "..." si es demasiado largo */
+}
+
+/* --- GRUPO DERECHO: Usuario + Salir --- */
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 25px; /* Buen espacio entre saludo y botón */
+    margin-left: 20px;
 }
 
 .user-welcome {
-    font-size: 0.95em;
-    color: #666;
+    font-size: 1em;
+    color: #555;
+    text-align: right;
+    white-space: nowrap;
 }
 
 .user-welcome strong {
-    color: #333;
+    color: var(--color-texto-titulo);
+    font-weight: 700;
 }
 
-/* Botón de Salir */
+/* Botón Salir (Estilo Outline que te gustó) */
 .btn-logout {
-    background-color: var(--color-peligro);
-    color: white;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 6px;
+    background-color: transparent; 
+    color: var(--color-peligro);
+    border: 2px solid var(--color-peligro);
+    padding: 7px 20px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: bold;
-    transition: background 0.3s;
+    transition: all 0.2s;
     font-size: 0.9em;
+    white-space: nowrap;
+    width: auto; /* Asegura que no se estire */
 }
 
 .btn-logout:hover {
-    background-color: #c82333;
+    background-color: var(--color-peligro);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
 }
 
 /* --- TÍTULOS --- */
