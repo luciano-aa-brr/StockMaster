@@ -6,6 +6,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+# --- CONEXIÓN A BASE DE DATOS ---
 def obtener_conexion_bd():
     conn = psycopg2.connect(
         host=os.environ.get('DB_HOST', 'db'),
@@ -15,12 +16,12 @@ def obtener_conexion_bd():
     )
     return conn
 
-
+# --- RUTA DE PRUEBA ---
 @app.route('/')
 def inicio():
     return jsonify({"mensaje": "API de StockMaster funcionando correctamente"})
 
-
+# --- 1. LEER PRODUCTOS (GET) ---
 @app.route('/api/productos', methods=['GET'])
 def obtener_productos():
     try:
@@ -30,7 +31,7 @@ def obtener_productos():
         productos_bd = cur.fetchall()
         cur.close()
         conn.close()
-        
+
         lista_productos = []
         for p in productos_bd:
             lista_productos.append({
@@ -45,7 +46,7 @@ def obtener_productos():
         print(e)
         return jsonify({"error": "Error al conectar con la base de datos"}), 500
 
-
+# --- 2. CREAR PRODUCTO (POST) ---
 @app.route('/api/productos', methods=['POST'])
 def agregar_producto():
     try:
@@ -64,6 +65,42 @@ def agregar_producto():
     except Exception as e:
         print(e)
         return jsonify({"error": "Error al guardar el producto"}), 500
+
+# --- 3. ACTUALIZAR PRODUCTO (PUT) 
+@app.route('/api/productos/<int:id>', methods=['PUT'])
+def actualizar_producto(id):
+    try:
+        datos = request.get_json()
+        conn = obtener_conexion_bd()
+        cur = conn.cursor()
+        # Actualizamos nombre, descripcion, precio y stock según el ID
+        cur.execute(
+            'UPDATE productos SET nombre=%s, descripcion=%s, precio=%s, stock=%s WHERE id=%s;',
+            (datos['nombre'], datos['descripcion'], datos['precio'], datos['stock'], id)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"mensaje": "Producto actualizado correctamente"})
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Error al actualizar"}), 500
+
+# --- 4. ELIMINAR PRODUCTO (DELETE) 
+@app.route('/api/productos/<int:id>', methods=['DELETE'])
+def eliminar_producto(id):
+    try:
+        conn = obtener_conexion_bd()
+        cur = conn.cursor()
+        # Borramos el producto que coincida con el ID
+        cur.execute('DELETE FROM productos WHERE id = %s;', (id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"mensaje": "Producto eliminado correctamente"})
+    except Exception as e:
+        print(e)
+        return jsonify({"error": "Error al eliminar"}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

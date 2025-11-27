@@ -15,13 +15,19 @@
         </div>
     </header>
 
-    <h3>Agregar Nuevo Producto</h3>
+    <h3 id="titulo-formulario">Agregar Nuevo Producto</h3>
     <div class="form-container">
+        <input type="hidden" id="producto-id">
+        
         <input type="text" id="nombre" placeholder="Nombre del producto" required>
         <input type="text" id="descripcion" placeholder="Descripción">
         <input type="number" id="precio" step="0.01" placeholder="Precio ($)" required>
         <input type="number" id="stock" placeholder="Cantidad Inicial" required>
-        <button onclick="agregarProducto()">Guardar Producto</button>
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="guardarProducto()" id="btn-guardar">Guardar Producto</button>
+            <button onclick="cancelarEdicion()" id="btn-cancelar" style="background-color: #6c757d; display: none;">Cancelar</button>
+        </div>
     </div>
 
     <h3>Inventario Actual</h3>
@@ -34,7 +40,7 @@
                     <th>Descripción</th>
                     <th>Precio</th>
                     <th>Stock</th>
-                </tr>
+                    <th>Acciones</th> </tr>
             </thead>
             <tbody id="tabla-productos">
                 </tbody>
@@ -42,9 +48,14 @@
     </div>
 
     <script>
-        // Lógica de conexión con el Backend
+        // CONFIGURACIÓN DE LA API
+        // Si estás usando Nginx (Local o Nube), usa la ruta relativa: '/api/productos'
+        // Si estás probando sin Nginx (solo frontend), usa: 'http://localhost:5000/api/productos'
         const API_URL = '/api/productos';
 
+        let editando = false;
+
+        // 1. CARGAR PRODUCTOS (READ)
         async function cargarProductos() {
             try {
                 const response = await fetch(API_URL);
@@ -54,25 +65,32 @@
                 
                 productos.forEach(p => {
                     const precioFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(p.precio);
+                    
+                    // Preparamos los datos para pasarlos al botón de editar (escapando comillas)
+                    const prodString = JSON.stringify(p).replace(/"/g, '&quot;');
+
                     const row = `<tr>
                         <td>#${p.id}</td>
                         <td><strong>${p.nombre}</strong></td>
                         <td>${p.descripcion}</td>
                         <td>${precioFormateado}</td>
                         <td><span style="background: ${p.stock < 10 ? '#ffcccc' : '#d4edda'}; padding: 3px 8px; border-radius: 10px; font-size: 0.9em">${p.stock} un.</span></td>
+                        <td>
+                            <button style="background: #ffc107; color: #000; padding: 5px 10px; font-size: 0.8em; width: auto; display: inline-block; margin-right: 5px;" onclick="cargarDatosEdicion(${prodString})">✏️</button>
+                            <button style="background: #dc3545; color: #fff; padding: 5px 10px; font-size: 0.8em; width: auto; display: inline-block;" onclick="eliminarProducto(${p.id})">🗑️</button>
+                        </td>
                     </tr>`;
                     tbody.innerHTML += row;
                 });
             } catch (error) {
-                console.error('Error cargando productos:', error);
-                document.getElementById('tabla-productos').innerHTML = '<tr><td colspan="5" style="text-align:center; color: red;">Error al conectar con el Backend</td></tr>';
+                console.error('Error cargando:', error);
             }
         }
 
-        async function agregarProducto() {
-            const nombreBtn = document.querySelector('button');
-            nombreBtn.innerText = 'Guardando...';
-            nombreBtn.disabled = true;
+        // 2. GUARDAR (CREATE O UPDATE)
+        async function guardarProducto() {
+            const btn = document.getElementById('btn-guardar');
+            btn.disabled = true;
 
             const data = {
                 nombre: document.getElementById('nombre').value,
@@ -80,32 +98,102 @@
                 precio: parseFloat(document.getElementById('precio').value),
                 stock: parseInt(document.getElementById('stock').value)
             };
+            
+            const id = document.getElementById('producto-id').value;
+            let url = API_URL;
+            let method = 'POST';
+
+            // Si estamos editando, cambiamos la URL (agregamos ID) y el método a PUT
+            if (editando && id) {
+                url = `${API_URL}/${id}`;
+                method = 'PUT';
+            }
 
             try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
+                const response = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
                 
                 if (response.ok) {
-                    document.getElementById('nombre').value = ''; 
-                    document.getElementById('descripcion').value = '';
-                    document.getElementById('precio').value = '';
-                    document.getElementById('stock').value = '';
+                    limpiarFormulario();
                     cargarProductos(); 
                 } else {
-                    alert('Error al guardar el producto.');
+                    alert('Error al guardar. Revisa la consola.');
                 }
             } catch (error) {
                 console.error(error);
                 alert('Error de conexión.');
             } finally {
-                nombreBtn.innerText = 'Guardar Producto';
-                nombreBtn.disabled = false;
+                btn.disabled = false;
             }
         }
 
+        // 3. ELIMINAR (DELETE)
+        async function eliminarProducto(id) {
+            if(!confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
+
+            try {
+                const response = await fetch(`${API_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    cargarProductos();
+                } else {
+                    alert('No se pudo eliminar');
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // FUNCIONES AUXILIARES PARA EL FORMULARIO
+        function cargarDatosEdicion(producto) {
+            // Llenar inputs
+            document.getElementById('producto-id').value = producto.id;
+            document.getElementById('nombre').value = producto.nombre;
+            document.getElementById('descripcion').value = producto.descripcion;
+            document.getElementById('precio').value = producto.precio;
+            document.getElementById('stock').value = producto.stock;
+
+            // Cambiar aspecto visual
+            editando = true;
+            document.getElementById('titulo-formulario').innerText = 'Editar Producto #' + producto.id;
+            const btnGuardar = document.getElementById('btn-guardar');
+            btnGuardar.innerText = 'Actualizar Producto';
+            btnGuardar.style.backgroundColor = '#ffc107'; // Amarillo advertencia
+            btnGuardar.style.color = '#000';
+            
+            document.getElementById('btn-cancelar').style.display = 'inline-block';
+            
+            // Subir la pantalla para ver el formulario
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelarEdicion() {
+            limpiarFormulario();
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('producto-id').value = '';
+            document.getElementById('nombre').value = '';
+            document.getElementById('descripcion').value = '';
+            document.getElementById('precio').value = '';
+            document.getElementById('stock').value = '';
+
+            editando = false;
+            document.getElementById('titulo-formulario').innerText = 'Agregar Nuevo Producto';
+            
+            const btnGuardar = document.getElementById('btn-guardar');
+            btnGuardar.innerText = 'Guardar Producto';
+            btnGuardar.style.backgroundColor = ''; // Volver al color original CSS (Lavanda)
+            btnGuardar.style.color = '';
+            
+            document.getElementById('btn-cancelar').style.display = 'none';
+        }
+
+        // Cargar al iniciar
         cargarProductos();
     </script>
 </body>

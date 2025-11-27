@@ -11,3 +11,6 @@ dist/
 # Sistema Operativo
 .DS_Store
 Thumbs.db
+
+# SEGURIDAD
+deploy-azure.yaml
