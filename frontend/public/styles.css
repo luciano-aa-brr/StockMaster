@@ -1,4 +1,4 @@
-/* Definición de la Paleta de Colores - Halloween Ocean */
+/* --- PALETA DE COLORES (Halloween Ocean) --- */
 :root {
     --color-lavanda: #BFA2DB;
     --color-secundario: #D9D9D9;
@@ -6,53 +6,84 @@
     --color-texto-principal: #4A444A;
     --color-fondo-body: #f8f9fa;
     --color-fondo-caja: #ffffff;
+    --color-boton-hover: #af8fd0;
+    --color-peligro: #dc3545;
+    --color-advertencia: #ffc107;
 }
 
 body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    max-width: 900px;
+    max-width: 1000px; /* Un poco más ancho para que quepa todo bien */
     margin: 0 auto;
-    padding: 30px 20px;
+    padding: 20px;
     background-color: var(--color-fondo-body);
     color: var(--color-texto-principal);
 }
 
-/* Header y Datos del Grupo */
-header {
-    text-align: center;
-    margin-bottom: 40px;
-}
-
-h1 {
-    color: var(--color-texto-titulo);
-    margin-bottom: 10px;
-    font-size: 2.5em;
-}
-
-.grupo-info {
-    background-color: var(--color-fondo-caja);
-    padding: 15px;
+/* --- NUEVO HEADER (TIPO NAVBAR) --- */
+.app-header {
+    background-color: white;
+    padding: 15px 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 4px solid var(--color-lavanda);
+    margin-bottom: 30px;
     border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    border-top: 5px solid var(--color-lavanda);
-    display: inline-block;
 }
 
-.grupo-info h2 {
+.header-brand h1 {
     margin: 0;
-    color: var(--color-lavanda);
-    font-size: 1.2em;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.grupo-info p {
-    margin: 5px 0 0 0;
+    font-size: 1.8em;
     color: var(--color-texto-titulo);
-    font-weight: 500;
 }
 
-/* Títulos de sección */
+.header-user-info {
+    text-align: right;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.negocio-badge {
+    background-color: var(--color-lavanda);
+    color: #333;
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-weight: bold;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-welcome {
+    font-size: 0.95em;
+    color: #666;
+}
+
+.user-welcome strong {
+    color: #333;
+}
+
+/* Botón de Salir */
+.btn-logout {
+    background-color: var(--color-peligro);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.3s;
+    font-size: 0.9em;
+}
+
+.btn-logout:hover {
+    background-color: #c82333;
+}
+
+/* --- TÍTULOS --- */
 h3 {
     color: var(--color-texto-titulo);
     border-bottom: 2px solid var(--color-lavanda);
@@ -60,7 +91,7 @@ h3 {
     margin-top: 40px;
 }
 
-/* Formulario */
+/* --- FORMULARIOS --- */
 .form-container {
     background: var(--color-fondo-caja);
     padding: 25px;
@@ -98,18 +129,17 @@ button {
     font-weight: bold;
     cursor: pointer;
     transition: background-color 0.2s, transform 0.1s;
-    margin-top: 10px;
 }
 
 button:hover {
-    background-color: #af8fd0;
+    background-color: var(--color-boton-hover);
 }
 
 button:active {
     transform: scale(0.98);
 }
 
-/* Tabla */
+/* --- TABLA --- */
 .table-container {
     overflow-x: auto;
     box-shadow: 0 4px 15px rgba(0,0,0,0.08);
@@ -145,4 +175,54 @@ tr:last-child td {
 
 tr:hover td {
     background-color: #f9f3fd;
+}
+
+/* --- ESTILOS DEL LOGIN --- */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+}
+
+.login-container {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    border-top: 5px solid var(--color-lavanda);
+}
+
+.login-container h2 {
+    color: var(--color-texto-titulo);
+    margin-bottom: 20px;
+}
+
+.toggle-link {
+    margin-top: 15px;
+    color: #666;
+    font-size: 0.9em;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- FOOTER --- */
+.app-footer {
+    text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    color: #888;
+    font-size: 0.9em;
+    border-top: 1px solid #eee;
+}
+
+.app-footer strong {
+    color: var(--color-lavanda);
 }

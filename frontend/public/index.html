@@ -7,87 +7,201 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>📦 StockMaster</h1>
-        <div class="grupo-info">
-            <h2>Grupo: Halloween Ocean</h2>
-            <p>Integrantes: Luciano Aliaga y Matias Cerna</p>
-        </div>
-    </header>
 
-    <h3 id="titulo-formulario">Agregar Nuevo Producto</h3>
-    <div class="form-container">
-        <input type="hidden" id="producto-id">
+    <div id="login-view" class="login-wrapper">
         
-        <input type="text" id="nombre" placeholder="Nombre del producto" required>
-        <input type="text" id="descripcion" placeholder="Descripción">
-        <input type="number" id="precio" step="0.01" placeholder="Precio ($)" required>
-        <input type="number" id="stock" placeholder="Cantidad Inicial" required>
-        
-        <div style="display: flex; gap: 10px;">
-            <button onclick="guardarProducto()" id="btn-guardar">Guardar Producto</button>
-            <button onclick="cancelarEdicion()" id="btn-cancelar" style="background-color: #6c757d; display: none;">Cancelar</button>
+        <div id="form-login" class="login-container">
+            <h2>🔐 Iniciar Sesión</h2>
+            <input type="email" id="login-email" placeholder="Correo Electrónico">
+            <input type="password" id="login-pass" placeholder="Contraseña">
+            <button onclick="login()">Entrar</button>
+            <p class="toggle-link" onclick="toggleForms()">¿No tienes cuenta? Regístrate aquí</p>
+        </div>
+
+        <div id="form-register" class="login-container hidden">
+            <h2>📝 Crear Cuenta de Negocio</h2>
+            <input type="text" id="reg-nombre" placeholder="Tu Nombre Completo">
+            <input type="text" id="reg-negocio" placeholder="Nombre de tu Negocio">
+            <input type="email" id="reg-email" placeholder="Correo Electrónico">
+            <input type="password" id="reg-pass" placeholder="Contraseña">
+            <button onclick="registrar()">Registrarse</button>
+            <p class="toggle-link" onclick="toggleForms()">¿Ya tienes cuenta? Inicia Sesión</p>
         </div>
     </div>
 
-    <h3>Inventario Actual</h3>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Descripción</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Acciones</th> </tr>
-            </thead>
-            <tbody id="tabla-productos">
-                </tbody>
-        </table>
+    <div id="app-view" class="hidden">
+        
+        <header class="app-header">
+            <div class="header-brand">
+                <h1>📦 StockMaster</h1>
+            </div>
+            
+            <div class="header-user-info">
+                <span id="nombre-negocio-display" class="negocio-badge">Cargando...</span>
+                
+                <div class="user-welcome">
+                    Hola, <strong id="usuario-nombre">Usuario</strong>
+                </div>
+
+                <button class="btn-logout" onclick="logout()">Salir</button>
+            </div>
+        </header>
+
+        <h3 id="titulo-formulario">Gestión de Productos</h3>
+        <div class="form-container">
+            <input type="hidden" id="producto-id">
+            <input type="text" id="nombre" placeholder="Nombre del producto" required>
+            <input type="text" id="descripcion" placeholder="Descripción">
+            <input type="number" id="precio" step="0.01" placeholder="Precio ($)" required>
+            <input type="number" id="stock" placeholder="Cantidad Inicial" required>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="guardarProducto()" id="btn-guardar">Guardar Producto</button>
+                <button onclick="cancelarEdicion()" id="btn-cancelar" style="background-color: #6c757d; display: none;">Cancelar</button>
+            </div>
+        </div>
+
+        <h3>Inventario Actual</h3>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-productos"></tbody>
+            </table>
+        </div>
+
+        <footer class="app-footer">
+            <p>Sistema desarrollado por <strong>Luciano Aliaga</strong> &copy; 2025</p>
+            <p style="font-size: 0.8em;">Proyecto StockMaster v1.0</p>
+        </footer>
+
     </div>
 
     <script>
-        // CONFIGURACIÓN DE LA API
-        // Si estás usando Nginx (Local o Nube), usa la ruta relativa: '/api/productos'
-        // Si estás probando sin Nginx (solo frontend), usa: 'http://localhost:5000/api/productos'
-        const API_URL = '/api/productos';
+        // CONFIGURACIÓN API
+        const API_BASE = '/api'; 
+
+        // --- LÓGICA DE SESIÓN ---
+
+        function iniciarApp() {
+            const token = localStorage.getItem('token');
+            const nombre = localStorage.getItem('usuario');
+            const negocio = localStorage.getItem('negocio');
+
+            if (token) {
+                // Si hay token, mostramos la App y ocultamos el Login
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('app-view').classList.remove('hidden');
+                
+                // Llenamos el header con los datos
+                document.getElementById('usuario-nombre').innerText = nombre;
+                document.getElementById('nombre-negocio-display').innerText = negocio || 'Mi Negocio';
+                
+                cargarProductos();
+            } else {
+                // Si no hay token, mostramos el Login
+                document.getElementById('login-view').classList.remove('hidden');
+                document.getElementById('app-view').classList.add('hidden');
+            }
+        }
+
+        function toggleForms() {
+            document.getElementById('form-login').classList.toggle('hidden');
+            document.getElementById('form-register').classList.toggle('hidden');
+        }
+
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-pass').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('usuario', data.usuario);
+                    localStorage.setItem('negocio', data.negocio);
+                    iniciarApp();
+                } else {
+                    alert(data.error);
+                }
+            } catch (e) { console.error(e); alert('Error de conexión'); }
+        }
+
+        async function registrar() {
+            const nombre = document.getElementById('reg-nombre').value;
+            const negocio = document.getElementById('reg-negocio').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-pass').value;
+
+            if(!negocio) { alert('El nombre del negocio es obligatorio'); return; }
+
+            try {
+                const res = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nombre, email, password, nombre_negocio: negocio })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('¡Registro exitoso! Ahora inicia sesión.');
+                    toggleForms();
+                } else {
+                    alert(data.error);
+                }
+            } catch (e) { console.error(e); alert('Error de conexión'); }
+        }
+
+        function logout() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        // --- LÓGICA CRUD DE PRODUCTOS ---
 
         let editando = false;
 
-        // 1. CARGAR PRODUCTOS (READ)
         async function cargarProductos() {
             try {
-                const response = await fetch(API_URL);
-                const productos = await response.json();
+                const res = await fetch(`${API_BASE}/productos`);
+                const productos = await res.json();
                 const tbody = document.getElementById('tabla-productos');
                 tbody.innerHTML = '';
                 
                 productos.forEach(p => {
-                    const precioFormateado = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(p.precio);
-                    
-                    // Preparamos los datos para pasarlos al botón de editar (escapando comillas)
-                    const prodString = JSON.stringify(p).replace(/"/g, '&quot;');
+                    const precio = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(p.precio);
+                    // Importante: Escapamos comillas para evitar errores al pasar el objeto
+                    const prodStr = JSON.stringify(p).replace(/"/g, '&quot;');
 
-                    const row = `<tr>
+                    tbody.innerHTML += `<tr>
                         <td>#${p.id}</td>
                         <td><strong>${p.nombre}</strong></td>
                         <td>${p.descripcion}</td>
-                        <td>${precioFormateado}</td>
+                        <td>${precio}</td>
                         <td><span style="background: ${p.stock < 10 ? '#ffcccc' : '#d4edda'}; padding: 3px 8px; border-radius: 10px; font-size: 0.9em">${p.stock} un.</span></td>
                         <td>
-                            <button style="background: #ffc107; color: #000; padding: 5px 10px; font-size: 0.8em; width: auto; display: inline-block; margin-right: 5px;" onclick="cargarDatosEdicion(${prodString})">✏️</button>
-                            <button style="background: #dc3545; color: #fff; padding: 5px 10px; font-size: 0.8em; width: auto; display: inline-block;" onclick="eliminarProducto(${p.id})">🗑️</button>
+                            <button style="background: #ffc107; padding: 5px 10px; width:auto; margin-right:5px; color:#000;" onclick="editar(${prodStr})">✏️</button>
+                            <button style="background: #dc3545; color: white; padding: 5px 10px; width:auto;" onclick="eliminar(${p.id})">🗑️</button>
                         </td>
                     </tr>`;
-                    tbody.innerHTML += row;
                 });
-            } catch (error) {
-                console.error('Error cargando:', error);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        // 2. GUARDAR (CREATE O UPDATE)
         async function guardarProducto() {
             const btn = document.getElementById('btn-guardar');
             btn.disabled = true;
@@ -100,101 +214,80 @@
             };
             
             const id = document.getElementById('producto-id').value;
-            let url = API_URL;
+            let url = `${API_BASE}/productos`;
             let method = 'POST';
 
-            // Si estamos editando, cambiamos la URL (agregamos ID) y el método a PUT
             if (editando && id) {
-                url = `${API_URL}/${id}`;
+                url = `${API_BASE}/productos/${id}`;
                 method = 'PUT';
             }
 
             try {
-                const response = await fetch(url, {
+                const res = await fetch(url, {
                     method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
-                
-                if (response.ok) {
-                    limpiarFormulario();
+
+                if (res.ok) { 
+                    limpiar(); 
                     cargarProductos(); 
-                } else {
-                    alert('Error al guardar. Revisa la consola.');
+                } else { 
+                    alert('Error al guardar'); 
                 }
-            } catch (error) {
-                console.error(error);
-                alert('Error de conexión.');
-            } finally {
-                btn.disabled = false;
-            }
+            } catch(e) { console.error(e); }
+            finally { btn.disabled = false; }
         }
 
-        // 3. ELIMINAR (DELETE)
-        async function eliminarProducto(id) {
-            if(!confirm('¿Estás seguro de que quieres eliminar este producto?')) return;
-
+        async function eliminar(id) {
+            if(!confirm('¿Eliminar producto?')) return;
             try {
-                const response = await fetch(`${API_URL}/${id}`, {
-                    method: 'DELETE'
-                });
-                if (response.ok) {
-                    cargarProductos();
-                } else {
-                    alert('No se pudo eliminar');
-                }
-            } catch (error) {
-                console.error(error);
-            }
+                const res = await fetch(`${API_BASE}/productos/${id}`, { method: 'DELETE' });
+                if (res.ok) cargarProductos();
+            } catch(e) { console.error(e); }
         }
 
-        // FUNCIONES AUXILIARES PARA EL FORMULARIO
-        function cargarDatosEdicion(producto) {
-            // Llenar inputs
-            document.getElementById('producto-id').value = producto.id;
-            document.getElementById('nombre').value = producto.nombre;
-            document.getElementById('descripcion').value = producto.descripcion;
-            document.getElementById('precio').value = producto.precio;
-            document.getElementById('stock').value = producto.stock;
-
-            // Cambiar aspecto visual
+        function editar(p) {
+            document.getElementById('producto-id').value = p.id;
+            document.getElementById('nombre').value = p.nombre;
+            document.getElementById('descripcion').value = p.descripcion;
+            document.getElementById('precio').value = p.precio;
+            document.getElementById('stock').value = p.stock;
+            
             editando = true;
-            document.getElementById('titulo-formulario').innerText = 'Editar Producto #' + producto.id;
-            const btnGuardar = document.getElementById('btn-guardar');
-            btnGuardar.innerText = 'Actualizar Producto';
-            btnGuardar.style.backgroundColor = '#ffc107'; // Amarillo advertencia
-            btnGuardar.style.color = '#000';
+            document.getElementById('titulo-formulario').innerText = 'Editar Producto';
+            const btn = document.getElementById('btn-guardar');
+            btn.innerText = 'Actualizar';
+            btn.style.background = '#ffc107';
+            btn.style.color = '#000';
             
             document.getElementById('btn-cancelar').style.display = 'inline-block';
-            
-            // Subir la pantalla para ver el formulario
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function cancelarEdicion() {
-            limpiarFormulario();
+            limpiar();
         }
 
-        function limpiarFormulario() {
+        function limpiar() {
             document.getElementById('producto-id').value = '';
             document.getElementById('nombre').value = '';
             document.getElementById('descripcion').value = '';
             document.getElementById('precio').value = '';
             document.getElementById('stock').value = '';
-
-            editando = false;
-            document.getElementById('titulo-formulario').innerText = 'Agregar Nuevo Producto';
             
-            const btnGuardar = document.getElementById('btn-guardar');
-            btnGuardar.innerText = 'Guardar Producto';
-            btnGuardar.style.backgroundColor = ''; // Volver al color original CSS (Lavanda)
-            btnGuardar.style.color = '';
+            editando = false;
+            document.getElementById('titulo-formulario').innerText = 'Gestión de Productos';
+            const btn = document.getElementById('btn-guardar');
+            btn.innerText = 'Guardar Producto';
+            btn.style.background = '';
+            btn.style.color = '';
             
             document.getElementById('btn-cancelar').style.display = 'none';
         }
 
-        // Cargar al iniciar
-        cargarProductos();
+        // INICIAR
+        iniciarApp();
     </script>
 </body>
 </html>
