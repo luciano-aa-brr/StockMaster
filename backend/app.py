@@ -1,5 +1,5 @@
 import os
-import psycopg2
+import mysql.connector
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
@@ -8,20 +8,19 @@ CORS(app)
 
 # --- CONEXIÓN A BASE DE DATOS ---
 def obtener_conexion_bd():
-    conn = psycopg2.connect(
+    conn = mysql.connector.connect(
         host=os.environ.get('DB_HOST', 'db'),
-        database=os.environ.get('DB_NAME', 'stockmaster_db'),
-        user=os.environ.get('DB_USER', 'usuario'),
-        password=os.environ.get('DB_PASSWORD', 'password')
+        user=os.environ.get('DB_USER', 'root'), 
+        password=os.environ.get('DB_PASSWORD', 'password'),
+        database=os.environ.get('DB_NAME', 'stockmaster_db')
     )
     return conn
 
-# --- RUTA DE PRUEBA ---
 @app.route('/')
 def inicio():
-    return jsonify({"mensaje": "API de StockMaster funcionando correctamente"})
+    return jsonify({"mensaje": "API StockMaster (MySQL) Funcionando"})
 
-# --- 1. LEER PRODUCTOS (GET) ---
+# --- 1. LEER PRODUCTOS ---
 @app.route('/api/productos', methods=['GET'])
 def obtener_productos():
     try:
@@ -44,60 +43,61 @@ def obtener_productos():
         return jsonify(lista_productos)
     except Exception as e:
         print(e)
-        return jsonify({"error": "Error al conectar con la base de datos"}), 500
+        return jsonify({"error": "Error de conexión"}), 500
 
-# --- 2. CREAR PRODUCTO (POST) ---
+# --- 2. CREAR PRODUCTO ---
 @app.route('/api/productos', methods=['POST'])
 def agregar_producto():
     try:
         nuevo_producto = request.get_json()
         conn = obtener_conexion_bd()
         cur = conn.cursor()
-        cur.execute(
-            'INSERT INTO productos (nombre, descripcion, precio, stock) VALUES (%s, %s, %s, %s) RETURNING id;',
-            (nuevo_producto['nombre'], nuevo_producto['descripcion'], nuevo_producto['precio'], nuevo_producto['stock'])
-        )
-        nuevo_id = cur.fetchone()[0]
+        
+        sql = 'INSERT INTO productos (nombre, descripcion, precio, stock) VALUES (%s, %s, %s, %s)'
+        val = (nuevo_producto['nombre'], nuevo_producto['descripcion'], nuevo_producto['precio'], nuevo_producto['stock'])
+        
+        cur.execute(sql, val)
         conn.commit()
+        
+        nuevo_id = cur.lastrowid
+        
         cur.close()
         conn.close()
-        return jsonify({"id": nuevo_id, "mensaje": "Producto creado exitosamente"}), 201
+        return jsonify({"id": nuevo_id, "mensaje": "Producto creado"}), 201
     except Exception as e:
         print(e)
-        return jsonify({"error": "Error al guardar el producto"}), 500
+        return jsonify({"error": "Error al guardar"}), 500
 
-# --- 3. ACTUALIZAR PRODUCTO (PUT) 
+# --- 3. ACTUALIZAR PRODUCTO ---
 @app.route('/api/productos/<int:id>', methods=['PUT'])
 def actualizar_producto(id):
     try:
         datos = request.get_json()
         conn = obtener_conexion_bd()
         cur = conn.cursor()
-        # Actualizamos nombre, descripcion, precio y stock según el ID
-        cur.execute(
-            'UPDATE productos SET nombre=%s, descripcion=%s, precio=%s, stock=%s WHERE id=%s;',
-            (datos['nombre'], datos['descripcion'], datos['precio'], datos['stock'], id)
-        )
+        sql = 'UPDATE productos SET nombre=%s, descripcion=%s, precio=%s, stock=%s WHERE id=%s'
+        val = (datos['nombre'], datos['descripcion'], datos['precio'], datos['stock'], id)
+        
+        cur.execute(sql, val)
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({"mensaje": "Producto actualizado correctamente"})
+        return jsonify({"mensaje": "Actualizado"})
     except Exception as e:
         print(e)
         return jsonify({"error": "Error al actualizar"}), 500
 
-# --- 4. ELIMINAR PRODUCTO (DELETE) 
+# --- 4. ELIMINAR PRODUCTO ---
 @app.route('/api/productos/<int:id>', methods=['DELETE'])
 def eliminar_producto(id):
     try:
         conn = obtener_conexion_bd()
         cur = conn.cursor()
-        # Borramos el producto que coincida con el ID
-        cur.execute('DELETE FROM productos WHERE id = %s;', (id,))
+        cur.execute('DELETE FROM productos WHERE id = %s', (id,))
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({"mensaje": "Producto eliminado correctamente"})
+        return jsonify({"mensaje": "Eliminado"})
     except Exception as e:
         print(e)
         return jsonify({"error": "Error al eliminar"}), 500

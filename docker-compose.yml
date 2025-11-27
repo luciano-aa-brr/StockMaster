@@ -3,28 +3,29 @@ version: '3.8'
 services:
   # 1. Base de Datos
   db:
-    image: postgres:13
+    image: mysql:5.7
     container_name: stockmaster_db
     environment:
-      POSTGRES_USER: usuario
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: stockmaster_db
+      
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - stockmaster-net
-
-  # 2. Backend 
+  # 2. Backend
   backend:
     build: ./backend
     expose:
       - "5000"
     environment:
       DB_HOST: db
-      DB_NAME: stockmaster_db
-      DB_USER: usuario
-      DB_PASSWORD: password
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: root 
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD} # Debe 
     depends_on:
       - db
     networks:
@@ -68,7 +69,7 @@ services:
       - stockmaster-net
 
 volumes:
-  postgres_data:
+  mysql_data:
 
 networks:
   stockmaster-net:
